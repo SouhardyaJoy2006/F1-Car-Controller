@@ -114,7 +114,7 @@
   </style>
 </head>
 <body>
-  <h1>🏎️ F1 Car 8-Way Direction Controller</h1>
+  <h1>🏎️ F1 Car Controller</h1>
   <div id="status">Not Connected</div>
   <button id="connectBtn">🔗 Connect to Car</button>
   
@@ -232,7 +232,7 @@
       const data = new Uint8Array(3);
       data[0] = throttle + 100;
       data[1] = steer + 100;
-      data[2] = (stopPressed ? 0x01 : 0);
+      data[2] = stopPressed ? 0x01 : 0x00;
 
       bleCharacteristic.writeValueWithoutResponse(data);
 
