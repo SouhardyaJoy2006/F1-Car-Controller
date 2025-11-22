@@ -2,104 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, orientation=landscape" />
-  <title>F1 Car Controller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 Car BLE Control</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    @media screen and (orientation: portrait) {
-      body {
-        transform: rotate(90deg);
-        transform-origin: left top;
-        width: 100vh;
-        height: 100vw;
-        overflow-x: hidden;
-        position: absolute;
-        top: 100%;
-        left: 0;
-      }
-    }
     body {
       background: radial-gradient(circle, #111, #000);
       color: white;
       font-family: 'Poppins', sans-serif;
       text-align: center;
-      padding: 10px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       height: 100vh;
       margin: 0;
-      overflow: hidden;
     }
-    h1 {
-      font-size: 1.8rem;
-      margin: 5px 0 15px 0;
-    }
-    #status {
-      color: #00bfff;
-      font-size: 1rem;
-      margin-bottom: 10px;
-    }
+    h1 { font-size: 1.8rem; margin: 10px 0; }
+    #status { margin: 10px 0; color: #00bfff; font-size: 1rem; }
     #connectBtn {
-      background: #00bfff;
-      border: none;
-      color: #fff;
-      padding: 12px 30px;
-      font-size: 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.3s;
+      background: #00bfff; border: none; color: #fff;
+      padding: 12px 30px; font-size: 1rem; border-radius: 10px;
+      cursor: pointer; transition: 0.3s; margin-bottom: 20px;
       font-weight: 600;
-      margin-bottom: 20px;
     }
-    #connectBtn:hover {
-      background: #0099cc;
-    }
-    .joysticks-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 40px;
-      width: 100%;
-      max-width: 700px;
-    }
+    #connectBtn:hover { background: #0099cc; }
+    
     .joystick-container {
       position: relative;
-      width: 250px;
-      height: 250px;
+      margin: 20px 0;
     }
+    
     canvas {
-      background: #222;
-      border-radius: 50%;
+      background: #222; 
+      border-radius: 50%; 
       border: 3px solid #444;
-      width: 250px;
-      height: 250px;
+      width: 250px; 
+      height: 250px; 
       touch-action: none;
       box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
-      user-select: none;
     }
-    .buttons {
-      margin-top: 25px;
+    
+    .direction-labels {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      pointer-events: none;
     }
-    button.stop {
-      background: #ff8800;
-      color: #fff;
-      border: none;
-      padding: 12px 25px;
+    
+    .dir-label {
+      position: absolute;
+      color: #666;
       font-weight: 600;
-      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .dir-label.f { top: -25px; left: 50%; transform: translateX(-50%); }
+    .dir-label.fr { top: 5px; right: 5px; }
+    .dir-label.r { top: 50%; right: -30px; transform: translateY(-50%); }
+    .dir-label.br { bottom: 5px; right: 5px; }
+    .dir-label.b { bottom: -25px; left: 50%; transform: translateX(-50%); }
+    .dir-label.bl { bottom: 5px; left: 5px; }
+    .dir-label.l { top: 50%; left: -25px; transform: translateY(-50%); }
+    .dir-label.fl { top: 5px; left: 5px; }
+    
+    .buttons { 
+      margin-top: 25px; 
+      display: flex; 
+      gap: 15px; 
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    button.stop, button#contForwardBtn, button#contBackwardBtn {
+      background: #00bfff; 
+      color: #fff; 
+      border: none;
+      padding: 12px 25px; 
+      font-weight: 600; 
+      border-radius: 10px; 
       cursor: pointer;
       font-size: 1rem;
       transition: 0.3s;
+      min-width: 180px;
     }
+    
     button.stop:hover {
       background: #ff6600;
       box-shadow: 0 0 15px rgba(255, 136, 0, 0.5);
     }
-    #values {
-      margin-top: 20px;
-      color: #aaa;
+
+    button#contForwardBtn:hover, button#contBackwardBtn:hover {
+      background: #0099cc;
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.75);
+    }
+    
+    button.active {
+      background: #00ff00 !important;
+      color: #000 !important;
+      box-shadow: 0 0 15px #00ff00 !important;
+    }
+    
+    #values { 
+      margin-top: 20px; 
+      color: #aaa; 
       font-size: 1rem;
       background: rgba(255, 255, 255, 0.05);
       padding: 10px 20px;
@@ -107,6 +114,7 @@
       width: fit-content;
       user-select: none;
     }
+    
     .direction-display {
       font-size: 2rem;
       color: #00bfff;
@@ -118,176 +126,253 @@
   </style>
 </head>
 <body>
-  <h1>🏎️ F1 Car Controller</h1>
+  <h1>🏎️ F1 Car 8-Direction Controller</h1>
   <div id="status">Not Connected</div>
   <button id="connectBtn">🔗 Connect to Car</button>
+  
   <div class="direction-display" id="directionDisplay">—</div>
-  <div class="joysticks-wrapper">
-    <div class="joystick-container" id="leftJoystickContainer">
-      <canvas id="leftJoystick" width="250" height="250"></canvas>
+  
+  <div class="joystick-container">
+    <div class="direction-labels">
+      <div class="dir-label f">F</div>
+      <div class="dir-label fr">FR</div>
+      <div class="dir-label r">R</div>
+      <div class="dir-label br">BR</div>
+      <div class="dir-label b">B</div>
+      <div class="dir-label bl">BL</div>
+      <div class="dir-label l">L</div>
+      <div class="dir-label fl">FL</div>
     </div>
-    <div class="joystick-container" id="rightJoystickContainer">
-      <canvas id="rightJoystick" width="250" height="250"></canvas>
-    </div>
+    <canvas id="joystick" width="250" height="250"></canvas>
   </div>
+  
   <div class="buttons">
     <button class="stop" id="stopBtn">⛔ EMERGENCY STOP</button>
+    <button id="contForwardBtn">▶️ Continuous Forward</button>
+    <button id="contBackwardBtn">◀️ Continuous Backward</button>
   </div>
-  <div id="values">Throttle: 0 | Steering: 0</div>
+  
+  <div id="values">Direction: — | Speed: 0%</div>
 
   <script>
     const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
     const CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
+
     let bleDevice, bleCharacteristic, isConnected = false;
     let throttle = 0, steer = 0, stopPressed = false;
 
+    const canvas = document.getElementById("joystick");
+    const ctx = canvas.getContext("2d");
     const size = 250, center = size / 2, radius = 80;
 
-    // Left joystick (vertical axis only)
-    const leftCanvas = document.getElementById("leftJoystick");
-    const leftCtx = leftCanvas.getContext("2d");
-    let leftPosX = center;
-    let leftPosY = center;
-
-    // Right joystick (horizontal axis only)
-    const rightCanvas = document.getElementById("rightJoystick");
-    const rightCtx = rightCanvas.getContext("2d");
-    let rightPosX = center;
-    let rightPosY = center;
-
-    function drawJoystick(ctx, x, y) {
+    // Draw joystick helper
+    function drawJoystick(x, y) {
       ctx.clearRect(0, 0, size, size);
       ctx.beginPath();
-      ctx.arc(center, center, radius + 30, 0, 2 * Math.PI);
+      ctx.arc(center, center, radius + 30, 0, Math.PI * 2);
       ctx.strokeStyle = "#555";
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(center, center, 3, 0, 2 * Math.PI);
+      ctx.arc(center, center, 3, 0, Math.PI * 2);
       ctx.fillStyle = "#666";
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(x, y, 30, 0, 2 * Math.PI);
+      ctx.arc(x, y, 30, 0, Math.PI * 2);
       ctx.fillStyle = "#00bfff";
       ctx.fill();
       ctx.strokeStyle = "#0099cc";
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
       ctx.fillStyle = "#fff";
       ctx.fill();
     }
 
-    // Initialize joysticks to center
-    drawJoystick(leftCtx, leftPosX, leftPosY);
-    drawJoystick(rightCtx, rightPosX, rightPosY);
+    drawJoystick(center, center);
 
-    function sendData() {
-      if (!isConnected) return;
-      const data = new Uint8Array(3);
-      data[0] = throttle + 100; // vertical (throttle)
-      data[1] = steer + 100;    // horizontal (steering)
-      data[2] = stopPressed ? 0x01 : 0x00;
-      bleCharacteristic.writeValueWithoutResponse(data);
-      document.getElementById("directionDisplay").textContent = `Throttle: ${throttle} | Steering: ${steer}`;
-      document.getElementById("values").textContent = `Throttle: ${throttle} | Steering: ${steer}`;
-    }
-
-    // Left joystick (vertical movement only)
-    function handleLeftJoystick(e) {
-      e.preventDefault();
-      const rect = leftCanvas.getBoundingClientRect();
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-      let dy = y - center;
-      dy = Math.min(Math.max(dy, -radius), radius);
-      leftPosX = center;
-      leftPosY = center + dy;
-      drawJoystick(leftCtx, leftPosX, leftPosY);
-      throttle = Math.round(-dy / radius * 100);
-      sendData();
-    }
-
-    function resetLeftJoystick() {
-      leftPosX = center;
-      leftPosY = center;
-      drawJoystick(leftCtx, leftPosX, leftPosY);
-      throttle = 0;
-      sendData();
-    }
-
-    // Right joystick (horizontal movement only)
-    function handleRightJoystick(e) {
-      e.preventDefault();
-      const rect = rightCanvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      let dx = x - center;
-      dx = Math.min(Math.max(dx, -radius), radius);
-      rightPosX = center + dx;
-      rightPosY = center;
-      drawJoystick(rightCtx, rightPosX, rightPosY);
-      steer = Math.round(dx / radius * 100);
-      sendData();
-    }
-
-    function resetRightJoystick() {
-      rightPosX = center;
-      rightPosY = center;
-      drawJoystick(rightCtx, rightPosX, rightPosY);
-      steer = 0;
-      sendData();
-    }
-
-    // Attach event listeners independently
-    ["mousedown", "touchstart"].forEach(evt => {
-      leftCanvas.addEventListener(evt, handleLeftJoystick);
-      rightCanvas.addEventListener(evt, handleRightJoystick);
-    });
-
-    ["mousemove", "touchmove"].forEach(evt => {
-      leftCanvas.addEventListener(evt, e => { if (e.buttons === 1 || e.touches) handleLeftJoystick(e); });
-      rightCanvas.addEventListener(evt, e => { if (e.buttons === 1 || e.touches) handleRightJoystick(e); });
-    });
-
-    ["mouseup", "mouseleave", "touchend"].forEach(evt => {
-      leftCanvas.addEventListener(evt, resetLeftJoystick);
-      rightCanvas.addEventListener(evt, resetRightJoystick);
-    });
-
-    // Emergency Stop button
-    document.getElementById("stopBtn").addEventListener("click", () => {
-      stopPressed = true;
-      throttle = 0;
-      steer = 0;
-      resetLeftJoystick();
-      resetRightJoystick();
-      sendData();
-      setTimeout(() => stopPressed = false, 200);
-    });
-
-    // BLE Connection
     document.getElementById("connectBtn").addEventListener("click", async () => {
       try {
         document.getElementById("status").textContent = "Connecting...";
-        bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID] }]
+        });
         const server = await bleDevice.gatt.connect();
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
         isConnected = true;
         document.getElementById("status").textContent = "✅ Connected!";
         document.getElementById("status").style.color = "#00ff00";
-
+        
         bleDevice.addEventListener("gattserverdisconnected", () => {
           isConnected = false;
           document.getElementById("status").textContent = "❌ Disconnected";
           document.getElementById("status").style.color = "#ff0000";
         });
+
+        // Reset toggle button states on reconnect
+        continuousForwardActive = false;
+        continuousBackwardActive = false;
+        contForwardBtn.classList.remove('active');
+        contBackwardBtn.classList.remove('active');
       } catch (err) {
         document.getElementById("status").textContent = "⚠️ Connection failed";
         document.getElementById("status").style.color = "#ff8800";
         console.error(err);
       }
     });
+
+    // Calculate direction string
+    function getDirection(throttle, steer) {
+      const deadzone = 15;
+      
+      if (Math.abs(throttle) < deadzone && Math.abs(steer) < deadzone) {
+        return "STOP";
+      }
+      
+      const forward = throttle > deadzone;
+      const backward = throttle < -deadzone;
+      const right = steer > deadzone;
+      const left = steer < -deadzone;
+      
+      if (forward && !left && !right) return "F";
+      if (forward && right) return "FR";
+      if (right && !forward && !backward) return "R";
+      if (backward && right) return "BR";
+      if (backward && !left && !right) return "B";
+      if (backward && left) return "BL";
+      if (left && !forward && !backward) return "L";
+      if (forward && left) return "FL";
+      
+      return "STOP";
+    }
+
+    // Send data to BLE device
+    function sendData() {
+      if (!isConnected) return;
+      
+      const data = new Uint8Array(3);
+      data[0] = throttle + 100;
+      data[1] = steer + 100;
+      data[2] = stopPressed ? 0x01 : 0x00;
+      
+      bleCharacteristic.writeValueWithoutResponse(data);
+      
+      const direction = getDirection(throttle, steer);
+      const speed = Math.max(Math.abs(throttle), Math.abs(steer));
+      
+      document.getElementById("directionDisplay").textContent = direction;
+      document.getElementById("values").textContent = `Direction: ${direction} | Speed: ${speed}%`;
+    }
+
+    // Handle joystick movement
+    function handleJoystick(e) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      
+      let dx = x - center;
+      let dy = y - center;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const max = radius;
+      
+      if (dist > max) {
+        dx *= max / dist;
+        dy *= max / dist;
+      }
+      
+      drawJoystick(center + dx, center + dy);
+      
+      throttle = Math.round(-dy / max * 100);
+      steer = Math.round(dx / max * 100);
+      
+      sendData();
+    }
+
+    // Reset joystick on release
+    function resetJoystick() {
+      drawJoystick(center, center);
+      throttle = 0;
+      steer = 0;
+      sendData();
+    }
+
+    ["mousedown", "touchstart"].forEach(evt => 
+      canvas.addEventListener(evt, handleJoystick)
+    );
+    
+    ["mousemove", "touchmove"].forEach(evt => 
+      canvas.addEventListener(evt, e => {
+        if (e.buttons === 1 || e.touches) {
+          handleJoystick(e);
+        }
+      })
+    );
+    
+    ["mouseup", "mouseleave", "touchend"].forEach(evt => 
+      canvas.addEventListener(evt, resetJoystick)
+    );
+
+    // Emergency stop
+    document.getElementById("stopBtn").addEventListener("click", () => {
+      stopPressed = true;
+      throttle = 0;
+      steer = 0;
+      resetJoystick();
+      sendData();
+      setTimeout(() => stopPressed = false, 200);
+    });
+
+    // Continuous drive buttons
+    const contForwardBtn = document.getElementById('contForwardBtn');
+    const contBackwardBtn = document.getElementById('contBackwardBtn');
+
+    let continuousForwardActive = false;
+    let continuousBackwardActive = false;
+
+    function sendToggleCommand(togVal) {
+      if (!isConnected) return;
+      
+      // Sending toggle command: throttle=100, steer=100, flags=togVal
+      const toggleData = new Uint8Array(3);
+      toggleData[0] = 100; // throttle neutral
+      toggleData[1] = 100; // steer neutral
+      toggleData[2] = togVal; // toggle flag (1 or 2)
+      bleCharacteristic.writeValueWithoutResponse(toggleData);
+    }
+
+    contForwardBtn.addEventListener('click', () => {
+      continuousForwardActive = !continuousForwardActive;
+      if (continuousForwardActive) {
+        continuousBackwardActive = false;
+        contForwardBtn.classList.add('active');
+        contBackwardBtn.classList.remove('active');
+        sendToggleCommand(1);  // Toggle continuous forward ON
+      } else {
+        contForwardBtn.classList.remove('active');
+        sendToggleCommand(1);  // Toggle continuous forward OFF
+      }
+    });
+
+    contBackwardBtn.addEventListener('click', () => {
+      continuousBackwardActive = !continuousBackwardActive;
+      if (continuousBackwardActive) {
+        continuousForwardActive = false;
+        contBackwardBtn.classList.add('active');
+        contForwardBtn.classList.remove('active');
+        sendToggleCommand(2);  // Toggle continuous backward ON
+      } else {
+        contBackwardBtn.classList.remove('active');
+        sendToggleCommand(2);  // Toggle continuous backward OFF
+      }
+    });
+
+    // Periodic send to keep driving commands updated
+    setInterval(() => {
+      if (isConnected) sendData();
+    }, 100);
   </script>
 </body>
 </html>
