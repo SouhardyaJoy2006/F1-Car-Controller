@@ -2,11 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>F1 Car BLE Control - Landscape</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, orientation=landscape" />
+  <title>F1 Car Controller</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    /* Ensure landscape style */
+    @media screen and (orientation: portrait) {
+      body {
+        transform: rotate(90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        overflow-x: hidden;
+        position: absolute;
+        top: 100%;
+        left: 0;
+      }
+    }
     body {
       background: radial-gradient(circle, #111, #000);
       color: white;
@@ -45,8 +56,6 @@
     #connectBtn:hover {
       background: #0099cc;
     }
-
-    /* Landscape container for two joysticks side by side */
     .joysticks-wrapper {
       display: flex;
       justify-content: center;
@@ -55,13 +64,11 @@
       width: 100%;
       max-width: 700px;
     }
-
     .joystick-container {
       position: relative;
       width: 250px;
       height: 250px;
     }
-
     canvas {
       background: #222;
       border-radius: 50%;
@@ -72,11 +79,9 @@
       box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
       user-select: none;
     }
-
     .buttons {
       margin-top: 25px;
     }
-
     button.stop {
       background: #ff8800;
       color: #fff;
@@ -88,12 +93,10 @@
       font-size: 1rem;
       transition: 0.3s;
     }
-
     button.stop:hover {
       background: #ff6600;
       box-shadow: 0 0 15px rgba(255, 136, 0, 0.5);
     }
-
     #values {
       margin-top: 20px;
       color: #aaa;
@@ -104,7 +107,6 @@
       width: fit-content;
       user-select: none;
     }
-
     .direction-display {
       font-size: 2rem;
       color: #00bfff;
@@ -119,9 +121,7 @@
   <h1>🏎️ F1 Car Controller</h1>
   <div id="status">Not Connected</div>
   <button id="connectBtn">🔗 Connect to Car</button>
-
   <div class="direction-display" id="directionDisplay">—</div>
-
   <div class="joysticks-wrapper">
     <div class="joystick-container" id="leftJoystickContainer">
       <canvas id="leftJoystick" width="250" height="250"></canvas>
@@ -130,44 +130,42 @@
       <canvas id="rightJoystick" width="250" height="250"></canvas>
     </div>
   </div>
-
   <div class="buttons">
     <button class="stop" id="stopBtn">⛔ EMERGENCY STOP</button>
   </div>
-
   <div id="values">Throttle: 0 | Steering: 0</div>
 
   <script>
     const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
     const CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
-
     let bleDevice, bleCharacteristic, isConnected = false;
-    // throttle for forward/backward (-100 to 100), steer for left/right (-100 to 100)
     let throttle = 0, steer = 0, stopPressed = false;
-
-    // Setup canvases
-    const leftCanvas = document.getElementById("leftJoystick");
-    const rightCanvas = document.getElementById("rightJoystick");
-    const leftCtx = leftCanvas.getContext("2d");
-    const rightCtx = rightCanvas.getContext("2d");
 
     const size = 250, center = size / 2, radius = 80;
 
-    // Draw joystick base and handle
+    // Left joystick (vertical axis only)
+    const leftCanvas = document.getElementById("leftJoystick");
+    const leftCtx = leftCanvas.getContext("2d");
+    let leftPosX = center;
+    let leftPosY = center;
+
+    // Right joystick (horizontal axis only)
+    const rightCanvas = document.getElementById("rightJoystick");
+    const rightCtx = rightCanvas.getContext("2d");
+    let rightPosX = center;
+    let rightPosY = center;
+
     function drawJoystick(ctx, x, y) {
       ctx.clearRect(0, 0, size, size);
-      // Base circle
       ctx.beginPath();
       ctx.arc(center, center, radius + 30, 0, 2 * Math.PI);
       ctx.strokeStyle = "#555";
       ctx.lineWidth = 2;
       ctx.stroke();
-      // Center dot
       ctx.beginPath();
       ctx.arc(center, center, 3, 0, 2 * Math.PI);
       ctx.fillStyle = "#666";
       ctx.fill();
-      // Handle circle
       ctx.beginPath();
       ctx.arc(x, y, 30, 0, 2 * Math.PI);
       ctx.fillStyle = "#00bfff";
@@ -175,96 +173,80 @@
       ctx.strokeStyle = "#0099cc";
       ctx.lineWidth = 3;
       ctx.stroke();
-      // Inner dot
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, 2 * Math.PI);
       ctx.fillStyle = "#fff";
       ctx.fill();
     }
 
-    // Initialize joysticks in neutral position
-    drawJoystick(leftCtx, center, center);
-    drawJoystick(rightCtx, center, center);
+    // Initialize joysticks to center
+    drawJoystick(leftCtx, leftPosX, leftPosY);
+    drawJoystick(rightCtx, rightPosX, rightPosY);
 
-    // Send BLE data function
     function sendData() {
       if (!isConnected) return;
-
       const data = new Uint8Array(3);
-      data[0] = throttle + 100; // Forward/backward throttle, neutral at 100
-      data[1] = steer + 100;    // Left/right steer, neutral at 100
+      data[0] = throttle + 100; // vertical (throttle)
+      data[1] = steer + 100;    // horizontal (steering)
       data[2] = stopPressed ? 0x01 : 0x00;
-
       bleCharacteristic.writeValueWithoutResponse(data);
-
       document.getElementById("directionDisplay").textContent = `Throttle: ${throttle} | Steering: ${steer}`;
       document.getElementById("values").textContent = `Throttle: ${throttle} | Steering: ${steer}`;
     }
 
-    // Joystick event handler for left (throttle)
+    // Left joystick (vertical movement only)
     function handleLeftJoystick(e) {
       e.preventDefault();
       const rect = leftCanvas.getBoundingClientRect();
-      let x = center; // We restrict movement in y only
-      let y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
       let dy = y - center;
-      if (dy > radius) dy = radius;
-      if (dy < -radius) dy = -radius;
-
-      drawJoystick(leftCtx, x, center + dy);
-
-      // Map y movement to throttle (inverted: up is forward = positive throttle)
+      dy = Math.min(Math.max(dy, -radius), radius);
+      leftPosX = center;
+      leftPosY = center + dy;
+      drawJoystick(leftCtx, leftPosX, leftPosY);
       throttle = Math.round(-dy / radius * 100);
-
       sendData();
     }
 
-    // Joystick event handler for right (steering)
-    function handleRightJoystick(e) {
-      e.preventDefault();
-      const rect = rightCanvas.getBoundingClientRect();
-      let x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      let y = center; // restrict y axis
-      
-      let dx = x - center;
-      if (dx > radius) dx = radius;
-      if (dx < -radius) dx = -radius;
-
-      drawJoystick(rightCtx, center + dx, y);
-
-      // Map x movement to steer
-      steer = Math.round(dx / radius * 100);
-
-      sendData();
-    }
-
-    // Reset joystick positions
     function resetLeftJoystick() {
-      drawJoystick(leftCtx, center, center);
+      leftPosX = center;
+      leftPosY = center;
+      drawJoystick(leftCtx, leftPosX, leftPosY);
       throttle = 0;
       sendData();
     }
+
+    // Right joystick (horizontal movement only)
+    function handleRightJoystick(e) {
+      e.preventDefault();
+      const rect = rightCanvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      let dx = x - center;
+      dx = Math.min(Math.max(dx, -radius), radius);
+      rightPosX = center + dx;
+      rightPosY = center;
+      drawJoystick(rightCtx, rightPosX, rightPosY);
+      steer = Math.round(dx / radius * 100);
+      sendData();
+    }
+
     function resetRightJoystick() {
-      drawJoystick(rightCtx, center, center);
+      rightPosX = center;
+      rightPosY = center;
+      drawJoystick(rightCtx, rightPosX, rightPosY);
       steer = 0;
       sendData();
     }
 
-    // Attach event listeners for both joysticks
-
+    // Attach event listeners independently
     ["mousedown", "touchstart"].forEach(evt => {
       leftCanvas.addEventListener(evt, handleLeftJoystick);
       rightCanvas.addEventListener(evt, handleRightJoystick);
     });
 
     ["mousemove", "touchmove"].forEach(evt => {
-      leftCanvas.addEventListener(evt, e => {
-        if (e.buttons === 1 || e.touches) handleLeftJoystick(e);
-      });
-      rightCanvas.addEventListener(evt, e => {
-        if (e.buttons === 1 || e.touches) handleRightJoystick(e);
-      });
+      leftCanvas.addEventListener(evt, e => { if (e.buttons === 1 || e.touches) handleLeftJoystick(e); });
+      rightCanvas.addEventListener(evt, e => { if (e.buttons === 1 || e.touches) handleRightJoystick(e); });
     });
 
     ["mouseup", "mouseleave", "touchend"].forEach(evt => {
@@ -280,18 +262,14 @@
       resetLeftJoystick();
       resetRightJoystick();
       sendData();
-      setTimeout(() => {
-        stopPressed = false;
-      }, 200);
+      setTimeout(() => stopPressed = false, 200);
     });
 
-    // BLE connect button
+    // BLE Connection
     document.getElementById("connectBtn").addEventListener("click", async () => {
       try {
         document.getElementById("status").textContent = "Connecting...";
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID] }]
-        });
+        bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
         const server = await bleDevice.gatt.connect();
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
@@ -304,10 +282,10 @@
           document.getElementById("status").textContent = "❌ Disconnected";
           document.getElementById("status").style.color = "#ff0000";
         });
-      } catch (error) {
-        document.getElementById("status").textContent = "⚠️ Connection Failed";
+      } catch (err) {
+        document.getElementById("status").textContent = "⚠️ Connection failed";
         document.getElementById("status").style.color = "#ff8800";
-        console.error(error);
+        console.error(err);
       }
     });
   </script>
