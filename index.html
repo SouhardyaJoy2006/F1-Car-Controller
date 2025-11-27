@@ -215,13 +215,13 @@
       const left = steer < -deadzone;
 
       if (forward && !left && !right) return "F";
-      if (forward && right) return "FR";
+      if (forward && right) return "X";
       if (right && !forward && !backward) return "R";
-      if (backward && right) return "BR";
+      if (backward && right) return "Z";
       if (backward && !left && !right) return "B";
-      if (backward && left) return "BL";
+      if (backward && left) return "Y";
       if (left && !forward && !backward) return "L";
-      if (forward && left) return "FL";
+      if (forward && left) return "W";
 
       return "STOP";
     }
