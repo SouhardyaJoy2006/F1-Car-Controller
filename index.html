@@ -317,16 +317,9 @@
       setTimeout(() => (stopPressed = false), 200);
     });
 
-    setInterval(() => {
-      if (isConnected) sendData();
-    }, 100);
-
-    // ===============================
-    // VOICE CONTROL
-    // ===============================
+    // VOICE CONTROL - NO COMMAND DISPLAY
     const voiceBtn = document.getElementById('voiceBtn');
 
-    // Check if browser supports Web Speech API
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
@@ -339,18 +332,15 @@
         voiceActive = true;
         voiceBtn.classList.add('listening');
         voiceBtn.textContent = '🎤 Listening...';
-        console.log('Voice recognition started');
       };
 
       recognition.onend = () => {
         voiceActive = false;
         voiceBtn.classList.remove('listening');
         voiceBtn.textContent = '🎤 Voice Control';
-        console.log('Voice recognition stopped');
       };
 
       recognition.onerror = (event) => {
-        console.error('Voice recognition error:', event.error);
         voiceActive = false;
         voiceBtn.classList.remove('listening');
         voiceBtn.textContent = '🎤 Voice Control';
@@ -359,8 +349,7 @@
       recognition.onresult = (event) => {
         const last = event.results.length - 1;
         const command = event.results[last][0].transcript.toLowerCase().trim();
-        console.log('Voice command:', command);
-        
+        // ✅ NO LABEL UPDATE - Processes silently
         processVoiceCommand(command);
       };
 
@@ -369,7 +358,6 @@
           alert('Please connect to car first!');
           return;
         }
-
         if (voiceActive) {
           recognition.stop();
         } else {
@@ -379,40 +367,34 @@
     } else {
       voiceBtn.textContent = '🎤 Not Supported';
       voiceBtn.disabled = true;
-      console.error('Web Speech API not supported in this browser');
     }
 
     function processVoiceCommand(command) {
-      // Remove extra spaces and common filler words
-      command = command.replace(/\s+/g, ' ').trim();
+      const voiceSpeed = 75;
       
-      // Set default speed for voice commands
-      const voiceSpeed = 75; // 75% speed for voice control
-      
-      // Map voice commands to directions
       if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // W direction
+        setVoiceDirection(voiceSpeed, voiceSpeed);
       } 
       else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // X direction
+        setVoiceDirection(voiceSpeed, voiceSpeed);
       }
-      else if (command.includes('backward left') || command.includes('go backward left') || command.includes('back left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction
+      else if (command.includes('backward left') || command.includes('back left')) {
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);
       }
-      else if (command.includes('backward right') || command.includes('go backward right') || command.includes('back right')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Z direction
+      else if (command.includes('backward right') || command.includes('back right')) {
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);
       }
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(voiceSpeed, 0); // F direction
+        setVoiceDirection(voiceSpeed, 0);
       }
-      else if (command.includes('backward') || command.includes('go backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(-voiceSpeed, 0); // B direction
+      else if (command.includes('backward') || command.includes('back') || command.includes('reverse')) {
+        setVoiceDirection(-voiceSpeed, 0);
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
-        setVoiceDirection(0, -voiceSpeed); // L direction
+        setVoiceDirection(0, -voiceSpeed);
       }
       else if (command.includes('right') || command.includes('turn right') || command.includes('go right')) {
-        setVoiceDirection(0, voiceSpeed); // R direction
+        setVoiceDirection(0, voiceSpeed);
       }
       else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
         stopPressed = true;
@@ -422,29 +404,23 @@
         sendData();
         setTimeout(() => stopPressed = false, 200);
       }
-      else {
-        console.log('Unknown voice command:', command);
-      }
     }
 
     function setVoiceDirection(voiceThrottle, voiceSteer) {
       throttle = voiceThrottle;
       steer = voiceSteer;
       
-      // Update joystick visual to match voice command
       const joyX = center + (steer / 100) * radius;
-      const joyY = center + (throttle / 100) * radius;
+      const joyY = center - (voiceThrottle / 100) * radius;
       drawJoystick(joyX, joyY);
       
       sendData();
       
-      // Auto-stop after 2 seconds for safety
       setTimeout(() => {
         if (voiceActive) {
           throttle = 0;
           steer = 0;
           resetJoystick();
-          sendData();
         }
       }, 2000);
     }
