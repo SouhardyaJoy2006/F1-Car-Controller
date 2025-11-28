@@ -232,8 +232,8 @@
         return "STOP";
       }
 
-      const forward = throttle > deadzone;
-      const backward = throttle < -deadzone;
+      const forward = throttle < -deadzone; // F is NEGATIVE throttle
+      const backward = throttle > deadzone; // B is POSITIVE throttle
       const right = steer > deadzone;
       const left = steer < -deadzone;
 
@@ -285,8 +285,8 @@
 
       drawJoystick(center + dx, center + dy);
 
-      throttle = Math.round(-dy / max * 100);
-      steer = Math.round(dx / max * 100);
+      throttle = Math.round(-dy / max * 100); // Inverse Y-axis: Up is Negative, Down is Positive
+      steer = Math.round(dx / max * 100);    // X-axis: Right is Positive, Left is Negative
 
       sendData();
     }
@@ -391,36 +391,34 @@
       
       // Map voice commands to directions
       
-      // Corrected logic for W, X, Y, Z directions:
-      
-      // Forward Left (W): Forward (Negative Throttle) and Left (Negative Steer)
+      // CORRECTED: Forward Left (W) needs NEGATIVE Throttle and NEGATIVE Steer
       if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // W direction
+        setVoiceDirection(voiceSpeed, -voiceSpeed); // W direction: FWD (-) & LEFT (-)
       } 
-      // Forward Right (X): Forward (Negative Throttle) and Right (Positive Steer)
+      // Forward Right (X)
       else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // X direction
+        setVoiceDirection(voiceSpeed, voiceSpeed); // X direction: FWD (-) & RIGHT (+)
       }
-      // Backward Left (Y): Backward (Positive Throttle) and Left (Negative Steer)
+      // Backward Left (Y)
       else if (command.includes('backward left') || command.includes('go backward left') || command.includes('back left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction
+        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction: BWD (+) & LEFT (-)
       }
-      // Backward Right (Z): Backward (Positive Throttle) and Right (Positive Steer)
+      // Backward Right (Z)
       else if (command.includes('backward right') || command.includes('go backward right') || command.includes('back right')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Z direction
+        setVoiceDirection(-voiceSpeed, voiceSpeed); // Z direction: BWD (+) & RIGHT (+)
       }
-      // Straight directions (F, B, L, R) remain correct
+      // Straight directions 
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(voiceSpeed, 0); // F direction
+        setVoiceDirection(voiceSpeed, 0); // F direction: FWD (-)
       }
       else if (command.includes('backward') || command.includes('go backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(-voiceSpeed, 0); // B direction
+        setVoiceDirection(-voiceSpeed, 0); // B direction: BWD (+)
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
-        setVoiceDirection(0, -voiceSpeed); // L direction
+        setVoiceDirection(0, -voiceSpeed); // L direction: LEFT (-)
       }
       else if (command.includes('right') || command.includes('turn right') || command.includes('go right')) {
-        setVoiceDirection(0, voiceSpeed); // R direction
+        setVoiceDirection(0, voiceSpeed); // R direction: RIGHT (+)
       }
       else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
         stopPressed = true;
