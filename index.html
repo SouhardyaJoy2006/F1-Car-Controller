@@ -168,7 +168,7 @@
     let bleDevice, bleCharacteristic, isConnected = false;
     let throttle = 0, steer = 0, stopPressed = false;
     let voiceActive = false;
-    let joystickActive = false;  // ✅ Track joystick activity
+    let joystickActive = false;
     let recognition = null;
 
     const canvas = document.getElementById("joystick");
@@ -218,7 +218,7 @@
           isConnected = false;
           document.getElementById("status").textContent = "❌ Disconnected";
           document.getElementById("status").style.color = "#ff0000";
-          stopPressed = true;  // ✅ Force continuous stop on disconnect
+          stopPressed = true;
         });
       } catch (err) {
         document.getElementById("status").textContent = "⚠️ Connection failed";
@@ -264,12 +264,11 @@
         `Direction: ${direction} | Speed: ${speed}% | Voice: ${voiceActive ? 'ON' : 'OFF'}`;
     }
 
-    // ✅ CONTINUOUS STOP LOOP - Runs every 100ms
     setInterval(() => {
       if (isConnected && stopPressed) {
         throttle = 0;
         steer = 0;
-        sendData();  // Keep sending STOP until new command
+        sendData();
       }
     }, 100);
 
@@ -295,8 +294,6 @@
 
       throttle = Math.round(-dy / max * 100);
       steer = Math.round(dx / max * 100);
-      
-      // ✅ Clear STOP when joystick moves (new command)
       stopPressed = false;
       
       sendData();
@@ -306,8 +303,6 @@
       drawJoystick(center, center);
       throttle = 0;
       steer = 0;
-      
-      // ✅ Activate CONTINUOUS STOP when joystick released
       stopPressed = true;
       joystickActive = false;
     }
@@ -332,7 +327,6 @@
       resetJoystick();
     });
 
-    // VOICE CONTROL
     const voiceBtn = document.getElementById('voiceBtn');
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -383,38 +377,45 @@
       voiceBtn.disabled = true;
     }
 
+    // ✅ FIXED VOICE COMMANDS - CORRECT DIRECTIONS
     function processVoiceCommand(command) {
       const voiceSpeed = 75;
-      
-      // ✅ Voice commands CLEAR STOP and send new direction
       stopPressed = false;
       
       if (command.includes('forward left') || command.includes('go forward left')) {
+        // ✅ W: Forward + Left → throttle=-75, steer=-75
         setVoiceDirection(voiceSpeed, voiceSpeed);
       } 
       else if (command.includes('forward right') || command.includes('go forward right')) {
+        // ✅ X: Forward + Right → throttle=-75, steer=+75
         setVoiceDirection(voiceSpeed, voiceSpeed);
       }
       else if (command.includes('backward left') || command.includes('back left')) {
+        // ✅ Y: Backward + Left → throttle=+75, steer=-75
         setVoiceDirection(-voiceSpeed, -voiceSpeed);
       }
       else if (command.includes('backward right') || command.includes('back right')) {
+        // ✅ Z: Backward + Right → throttle=+75, steer=+75
         setVoiceDirection(-voiceSpeed, -voiceSpeed);
       }
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
+        // ✅ F: Forward → throttle=-75, steer=0
         setVoiceDirection(voiceSpeed, 0);
       }
       else if (command.includes('backward') || command.includes('back') || command.includes('reverse')) {
+        // ✅ B: Backward → throttle=+75, steer=0
         setVoiceDirection(-voiceSpeed, 0);
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
+        // ✅ L: Left → throttle=0, steer=-75
         setVoiceDirection(0, -voiceSpeed);
       }
       else if (command.includes('right') || command.includes('turn right') || command.includes('go right')) {
+        // ✅ R: Right → throttle=0, steer=+75
         setVoiceDirection(0, voiceSpeed);
       }
       else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
-        stopPressed = true;  // ✅ Keep STOP active
+        stopPressed = true;
       }
     }
 
@@ -432,7 +433,7 @@
         if (voiceActive) {
           throttle = 0;
           steer = 0;
-          resetJoystick();  // ✅ Triggers continuous STOP
+          resetJoystick();
         }
       }, 2000);
     }
