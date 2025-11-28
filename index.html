@@ -28,12 +28,12 @@
       font-weight: 600;
     }
     #connectBtn:hover { background: #0099cc; }
-    
+
     .joystick-container {
       position: relative;
       margin: 20px 0;
     }
-    
+
     canvas {
       background: #222; 
       border-radius: 50%; 
@@ -43,21 +43,21 @@
       touch-action: none;
       box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
     }
-    
+
     .direction-labels {
       position: absolute;
       width: 250px;
       height: 250px;
       pointer-events: none;
     }
-    
+
     .dir-label {
       position: absolute;
       color: #666;
       font-weight: 600;
       font-size: 0.9rem;
     }
-    
+
     .dir-label.f { top: -25px; left: 50%; transform: translateX(-50%); }
     .dir-label.fr { top: 5px; right: 5px; }
     .dir-label.r { top: 50%; right: -30px; transform: translateY(-50%); }
@@ -66,7 +66,7 @@
     .dir-label.bl { bottom: 5px; left: 5px; }
     .dir-label.l { top: 50%; left: -25px; transform: translateY(-50%); }
     .dir-label.fl { top: 5px; left: 5px; }
-    
+
     .buttons { 
       margin-top: 25px; 
       display: flex; 
@@ -74,7 +74,7 @@
       flex-wrap: wrap;
       justify-content: center;
     }
-    
+
     button.stop, button#voiceBtn {
       background: #00bfff; 
       color: #fff; 
@@ -87,11 +87,11 @@
       transition: 0.3s;
       min-width: 180px;
     }
-    
+
     button.stop {
       background: #ff8800;
     }
-    
+
     button.stop:hover {
       background: #ff6600;
       box-shadow: 0 0 15px rgba(255, 136, 0, 0.5);
@@ -101,17 +101,17 @@
       background: #0099cc;
       box-shadow: 0 0 15px rgba(0, 191, 255, 0.75);
     }
-    
+
     button.listening {
       background: #ff0000 !important;
       animation: pulse 1s infinite;
     }
-    
+
     @keyframes pulse {
       0%, 100% { box-shadow: 0 0 10px #ff0000; }
       50% { box-shadow: 0 0 25px #ff0000; }
     }
-    
+
     #values { 
       margin-top: 20px; 
       color: #aaa; 
@@ -122,7 +122,7 @@
       width: fit-content;
       user-select: none;
     }
-    
+
     .direction-display {
       font-size: 2rem;
       color: #00bfff;
@@ -130,6 +130,12 @@
       font-weight: 600;
       text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
       user-select: none;
+    }
+
+    /* Disable joystick pointer events when voice active */
+    canvas.disabled {
+      pointer-events: none;
+      opacity: 0.5;
     }
   </style>
 </head>
@@ -164,7 +170,6 @@
   <script>
     const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
     const CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
-
     let bleDevice, bleCharacteristic, isConnected = false;
     let throttle = 0, steer = 0, stopPressed = false;
     let voiceActive = false;
@@ -200,241 +205,7 @@
 
     drawJoystick(center, center);
 
-    document.getElementById("connectBtn").addEventListener("click", async () => {
-      try {
-        document.getElementById("status").textContent = "Connecting...";
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID] }]
-        });
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService(SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-        isConnected = true;
-        document.getElementById("status").textContent = "✅ Connected!";
-        document.getElementById("status").style.color = "#00ff00";
-
-        bleDevice.addEventListener("gattserverdisconnected", () => {
-          isConnected = false;
-          document.getElementById("status").textContent = "❌ Disconnected";
-          document.getElementById("status").style.color = "#ff0000";
-        });
-      } catch (err) {
-        document.getElementById("status").textContent = "⚠️ Connection failed";
-        document.getElementById("status").style.color = "#ff8800";
-        console.error(err);
-      }
-    });
-
-    function getDirection(throttle, steer) {
-      const deadzone = 15;
-
-      if (Math.abs(throttle) < deadzone && Math.abs(steer) < deadzone) {
-        return "STOP";
-      }
-
-      const forward = throttle > deadzone;
-      const backward = throttle < -deadzone;
-      const right = steer > deadzone;
-      const left = steer < -deadzone;
-
-      if (forward && !left && !right) return "F";
-      if (forward && right) return "X";
-      if (right && !forward && !backward) return "R";
-      if (backward && right) return "Z";
-      if (backward && !left && !right) return "B";
-      if (backward && left) return "Y";
-      if (left && !forward && !backward) return "L";
-      if (forward && left) return "W";
-
-      return "STOP";
-    }
-
-    function sendData() {
-      if (!isConnected) return;
-
-      const data = new Uint8Array(3);
-      data[0] = throttle + 100;
-      data[1] = steer + 100;
-      data[2] = stopPressed ? 0x01 : 0x00;
-
-      bleCharacteristic.writeValueWithoutResponse(data);
-
-      const direction = getDirection(throttle, steer);
-      const speed = Math.max(Math.abs(throttle), Math.abs(steer));
-
-      document.getElementById("directionDisplay").textContent = direction;
-      document.getElementById("values").textContent =
-        `Direction: ${direction} | Speed: ${speed}% | Voice: ${voiceActive ? 'ON' : 'OFF'}`;
-    }
-
-    function handleJoystick(e) {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
-      let dx = x - center;
-      let dy = y - center;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const max = radius;
-
-      if (dist > max) {
-        dx *= max / dist;
-        dy *= max / dist;
-      }
-
-      drawJoystick(center + dx, center + dy);
-
-      throttle = Math.round(-dy / max * 100);
-      steer = Math.round(dx / max * 100);
-
-      // ✅ SEND STOP SIGNAL WHEN JOYSTICK RETURNS TO CENTER
-      if (Math.abs(throttle) < 15 && Math.abs(steer) < 15) {
-        stopPressed = true;
-        setTimeout(() => { stopPressed = false; }, 100);
-      }
-
-      sendData();
-    }
-
-    function resetJoystick() {
-      drawJoystick(center, center);
-      throttle = 0;
-      steer = 0;
-      
-      // ✅ CRITICAL: Send STOP signal when joystick centers
-      stopPressed = true;
-      sendData();
-      setTimeout(() => { 
-        stopPressed = false; 
-      }, 100);
-    }
-
-    ["mousedown", "touchstart"].forEach(evt => canvas.addEventListener(evt, handleJoystick));
-    ["mousemove", "touchmove"].forEach(evt =>
-      canvas.addEventListener(evt, e => {
-        if (e.buttons === 1 || e.touches) {
-          handleJoystick(e);
-        }
-      })
-    );
-    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(evt => canvas.addEventListener(evt, resetJoystick));
-
-    document.getElementById("stopBtn").addEventListener("click", () => {
-      stopPressed = true;
-      throttle = 0;
-      steer = 0;
-      resetJoystick();
-      sendData();
-      setTimeout(() => (stopPressed = false), 200);
-    });
-
-    // VOICE CONTROL - NO COMMAND DISPLAY
-    const voiceBtn = document.getElementById('voiceBtn');
-
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => {
-        voiceActive = true;
-        voiceBtn.classList.add('listening');
-        voiceBtn.textContent = '🎤 Listening...';
-      };
-
-      recognition.onend = () => {
-        voiceActive = false;
-        voiceBtn.classList.remove('listening');
-        voiceBtn.textContent = '🎤 Voice Control';
-      };
-
-      recognition.onerror = (event) => {
-        voiceActive = false;
-        voiceBtn.classList.remove('listening');
-        voiceBtn.textContent = '🎤 Voice Control';
-      };
-
-      recognition.onresult = (event) => {
-        const last = event.results.length - 1;
-        const command = event.results[last][0].transcript.toLowerCase().trim();
-        processVoiceCommand(command);
-      };
-
-      voiceBtn.addEventListener('click', () => {
-        if (!isConnected) {
-          alert('Please connect to car first!');
-          return;
-        }
-        if (voiceActive) {
-          recognition.stop();
-        } else {
-          recognition.start();
-        }
-      });
-    } else {
-      voiceBtn.textContent = '🎤 Not Supported';
-      voiceBtn.disabled = true;
-    }
-
-    function processVoiceCommand(command) {
-      const voiceSpeed = 75;
-      
-      if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
-      } 
-      else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(-voiceSpeed, voiceSpeed);
-      }
-      else if (command.includes('backward left') || command.includes('back left')) {
-        setVoiceDirection(voiceSpeed, -voiceSpeed);
-      }
-      else if (command.includes('backward right') || command.includes('back right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed);
-      }
-      else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(-voiceSpeed, 0);
-      }
-      else if (command.includes('backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(voiceSpeed, 0);
-      }
-      else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
-        setVoiceDirection(0, -voiceSpeed);
-      }
-      else if (command.includes('right') || command.includes('turn right') || command.includes('go right')) {
-        setVoiceDirection(0, voiceSpeed);
-      }
-      else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
-        stopPressed = true;
-        throttle = 0;
-        steer = 0;
-        resetJoystick();
-        sendData();
-        setTimeout(() => stopPressed = false, 200);
-      }
-    }
-
-    function setVoiceDirection(voiceThrottle, voiceSteer) {
-      throttle = voiceThrottle;
-      steer = voiceSteer;
-      
-      const joyX = center + (steer / 100) * radius;
-      const joyY = center - (voiceThrottle / 100) * radius;
-      drawJoystick(joyX, joyY);
-      
-      sendData();
-      
-      setTimeout(() => {
-        if (voiceActive) {
-          throttle = 0;
-          steer = 0;
-          resetJoystick();
-        }
-      }, 2000);
-    }
-  </script>
-</body>
-</html>
+    // =================
+    // Connect to BLE
+    // =================
+    document.getElementById("connectBtn
