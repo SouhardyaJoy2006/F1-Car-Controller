@@ -288,6 +288,12 @@
       throttle = Math.round(-dy / max * 100);
       steer = Math.round(dx / max * 100);
 
+      // ✅ SEND STOP SIGNAL WHEN JOYSTICK RETURNS TO CENTER
+      if (Math.abs(throttle) < 15 && Math.abs(steer) < 15) {
+        stopPressed = true;
+        setTimeout(() => { stopPressed = false; }, 100);
+      }
+
       sendData();
     }
 
@@ -295,7 +301,13 @@
       drawJoystick(center, center);
       throttle = 0;
       steer = 0;
+      
+      // ✅ CRITICAL: Send STOP signal when joystick centers
+      stopPressed = true;
       sendData();
+      setTimeout(() => { 
+        stopPressed = false; 
+      }, 100);
     }
 
     ["mousedown", "touchstart"].forEach(evt => canvas.addEventListener(evt, handleJoystick));
@@ -306,7 +318,7 @@
         }
       })
     );
-    ["mouseup", "mouseleave", "touchend"].forEach(evt => canvas.addEventListener(evt, resetJoystick));
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(evt => canvas.addEventListener(evt, resetJoystick));
 
     document.getElementById("stopBtn").addEventListener("click", () => {
       stopPressed = true;
@@ -349,7 +361,6 @@
       recognition.onresult = (event) => {
         const last = event.results.length - 1;
         const command = event.results[last][0].transcript.toLowerCase().trim();
-        // ✅ NO LABEL UPDATE - Processes silently
         processVoiceCommand(command);
       };
 
@@ -373,22 +384,22 @@
       const voiceSpeed = 75;
       
       if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed);
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);
       } 
       else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed);
+        setVoiceDirection(-voiceSpeed, voiceSpeed);
       }
       else if (command.includes('backward left') || command.includes('back left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+        setVoiceDirection(voiceSpeed, -voiceSpeed);
       }
       else if (command.includes('backward right') || command.includes('back right')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+        setVoiceDirection(voiceSpeed, voiceSpeed);
       }
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(voiceSpeed, 0);
+        setVoiceDirection(-voiceSpeed, 0);
       }
       else if (command.includes('backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(-voiceSpeed, 0);
+        setVoiceDirection(voiceSpeed, 0);
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
         setVoiceDirection(0, -voiceSpeed);
