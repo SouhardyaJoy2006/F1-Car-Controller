@@ -315,12 +315,12 @@
     const speed = 75;
     const c = cmd.replace(/\s+/g, " ").trim();
 
-    if(c.includes("forward left") || c.includes("go forward left")) setVoiceDirection(-speed, -speed);
-    else if(c.includes("forward right") || c.includes("go forward right")) setVoiceDirection(-speed, speed);
-    else if(c.includes("backward left") || c.includes("back left")) setVoiceDirection(speed, -speed);
-    else if(c.includes("backward right") || c.includes("back right")) setVoiceDirection(speed, speed);
-    else if(c.includes("forward") || c.includes("go forward") || c.includes("move forward")) setVoiceDirection(-speed, 0);
-    else if(c.includes("backward") || c.includes("back") || c.includes("reverse") || c.includes("go backward")) setVoiceDirection(speed, 0);
+    if(c.includes("forward left") || c.includes("go forward left")) setVoiceDirection(speed, speed);
+    else if(c.includes("forward right") || c.includes("go forward right")) setVoiceDirection(speed, -speed);
+    else if(c.includes("backward left") || c.includes("back left")) setVoiceDirection(-speed, speed);
+    else if(c.includes("backward right") || c.includes("back right")) setVoiceDirection(-speed, -speed);
+    else if(c.includes("forward") || c.includes("go forward") || c.includes("move forward")) setVoiceDirection(speed, 0);
+    else if(c.includes("backward") || c.includes("back") || c.includes("reverse") || c.includes("go backward")) setVoiceDirection(-speed, 0);
     else if(c.includes("left") || c.includes("turn left") || c.includes("go left")) setVoiceDirection(0, -speed);
     else if(c.includes("right") || c.includes("turn right") || c.includes("go right")) setVoiceDirection(0, speed);
     else if(c.includes("stop") || c.includes("halt") || c.includes("brake")) sendStopSignal();
