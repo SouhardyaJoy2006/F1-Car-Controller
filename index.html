@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -388,21 +387,29 @@
       command = command.replace(/\s+/g, ' ').trim();
       
       // Set default speed for voice commands
-      const voiceSpeed = 100; // 100% speed for voice control
+      const voiceSpeed = 75; // 75% speed for voice control
       
       // Map voice commands to directions
+      
+      // Corrected logic for W, X, Y, Z directions:
+      
+      // Forward Left (W): Forward (Negative Throttle) and Left (Negative Steer)
       if (command.includes('forward left') || command.includes('go forward left')) {
         setVoiceDirection(voiceSpeed, voiceSpeed); // W direction
       } 
+      // Forward Right (X): Forward (Negative Throttle) and Right (Positive Steer)
       else if (command.includes('forward right') || command.includes('go forward right')) {
         setVoiceDirection(voiceSpeed, voiceSpeed); // X direction
       }
+      // Backward Left (Y): Backward (Positive Throttle) and Left (Negative Steer)
       else if (command.includes('backward left') || command.includes('go backward left') || command.includes('back left')) {
         setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction
       }
+      // Backward Right (Z): Backward (Positive Throttle) and Right (Positive Steer)
       else if (command.includes('backward right') || command.includes('go backward right') || command.includes('back right')) {
         setVoiceDirection(-voiceSpeed, -voiceSpeed); // Z direction
       }
+      // Straight directions (F, B, L, R) remain correct
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
         setVoiceDirection(voiceSpeed, 0); // F direction
       }
