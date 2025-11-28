@@ -123,13 +123,7 @@
       user-select: none;
     }
     
-    .direction-display {
-      font-size: 2rem;
-      color: #00bfff;
-      margin: 15px 0;
-      font-weight: 600;
-      text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
-      user-select: none;
+   
     }
   </style>
 </head>
@@ -437,11 +431,7 @@
       throttle = voiceThrottle;
       steer = voiceSteer;
       
-      // Update joystick visual to match voice command
-      //const joyX = center + (steer / 100) * radius;
-      //const joyY = center + (throttle / 100) * radius;
-      //drawJoystick(joyX, joyY);
-      
+     
       sendData();
       
       // Auto-stop after 2 seconds for safety
