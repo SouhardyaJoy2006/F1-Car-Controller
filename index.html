@@ -391,22 +391,22 @@
       
       // Map voice commands to directions
       if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // W direction
+        setVoiceDirection(voiceSpeed, voiceSpeed); // W direction
       } 
       else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(-voiceSpeed, voiceSpeed); // X direction
+        setVoiceDirection(voiceSpeed, voiceSpeed); // X direction
       }
       else if (command.includes('backward left') || command.includes('go backward left') || command.includes('back left')) {
-        setVoiceDirection(voiceSpeed, -voiceSpeed); // Y direction
+        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction
       }
       else if (command.includes('backward right') || command.includes('go backward right') || command.includes('back right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // Z direction
+        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Z direction
       }
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(-voiceSpeed, 0); // F direction
+        setVoiceDirection(voiceSpeed, 0); // F direction
       }
       else if (command.includes('backward') || command.includes('go backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(voiceSpeed, 0); // B direction
+        setVoiceDirection(-voiceSpeed, 0); // B direction
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
         setVoiceDirection(0, -voiceSpeed); // L direction
