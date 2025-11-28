@@ -168,6 +168,7 @@
     let bleDevice, bleCharacteristic, isConnected = false;
     let throttle = 0, steer = 0, stopPressed = false;
     let voiceActive = false;
+    let joystickActive = false;  // ✅ Track joystick activity
     let recognition = null;
 
     const canvas = document.getElementById("joystick");
@@ -217,6 +218,7 @@
           isConnected = false;
           document.getElementById("status").textContent = "❌ Disconnected";
           document.getElementById("status").style.color = "#ff0000";
+          stopPressed = true;  // ✅ Force continuous stop on disconnect
         });
       } catch (err) {
         document.getElementById("status").textContent = "⚠️ Connection failed";
@@ -227,16 +229,13 @@
 
     function getDirection(throttle, steer) {
       const deadzone = 15;
-
       if (Math.abs(throttle) < deadzone && Math.abs(steer) < deadzone) {
         return "STOP";
       }
-
       const forward = throttle > deadzone;
       const backward = throttle < -deadzone;
       const right = steer > deadzone;
       const left = steer < -deadzone;
-
       if (forward && !left && !right) return "F";
       if (forward && right) return "X";
       if (right && !forward && !backward) return "R";
@@ -245,7 +244,6 @@
       if (backward && left) return "Y";
       if (left && !forward && !backward) return "L";
       if (forward && left) return "W";
-
       return "STOP";
     }
 
@@ -261,14 +259,24 @@
 
       const direction = getDirection(throttle, steer);
       const speed = Math.max(Math.abs(throttle), Math.abs(steer));
-
       document.getElementById("directionDisplay").textContent = direction;
       document.getElementById("values").textContent =
         `Direction: ${direction} | Speed: ${speed}% | Voice: ${voiceActive ? 'ON' : 'OFF'}`;
     }
 
+    // ✅ CONTINUOUS STOP LOOP - Runs every 100ms
+    setInterval(() => {
+      if (isConnected && stopPressed) {
+        throttle = 0;
+        steer = 0;
+        sendData();  // Keep sending STOP until new command
+      }
+    }, 100);
+
     function handleJoystick(e) {
       e.preventDefault();
+      joystickActive = true;
+      
       const rect = canvas.getBoundingClientRect();
       const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
       const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
@@ -287,13 +295,10 @@
 
       throttle = Math.round(-dy / max * 100);
       steer = Math.round(dx / max * 100);
-
-      // ✅ STOP SIGNAL WHEN NEAR CENTER (within deadzone)
-      if (Math.abs(throttle) < 15 && Math.abs(steer) < 15) {
-        stopPressed = true;
-        setTimeout(() => { stopPressed = false; }, 100);
-      }
-
+      
+      // ✅ Clear STOP when joystick moves (new command)
+      stopPressed = false;
+      
       sendData();
     }
 
@@ -302,29 +307,29 @@
       throttle = 0;
       steer = 0;
       
-      // ✅ CRITICAL: Send STOP signal when joystick returns to center
+      // ✅ Activate CONTINUOUS STOP when joystick released
       stopPressed = true;
-      sendData();
-      setTimeout(() => { stopPressed = false; }, 100);
+      joystickActive = false;
     }
 
     ["mousedown", "touchstart"].forEach(evt => canvas.addEventListener(evt, handleJoystick));
     ["mousemove", "touchmove"].forEach(evt =>
       canvas.addEventListener(evt, e => {
-        if (e.buttons === 1 || e.touches) {
+        if ((e.buttons === 1 || e.touches) && joystickActive) {
           handleJoystick(e);
         }
       })
     );
-    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(evt => canvas.addEventListener(evt, resetJoystick));
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(evt => 
+      canvas.addEventListener(evt, resetJoystick)
+    );
 
     document.getElementById("stopBtn").addEventListener("click", () => {
       stopPressed = true;
       throttle = 0;
       steer = 0;
+      joystickActive = false;
       resetJoystick();
-      sendData();
-      setTimeout(() => (stopPressed = false), 200);
     });
 
     // VOICE CONTROL
@@ -381,6 +386,9 @@
     function processVoiceCommand(command) {
       const voiceSpeed = 75;
       
+      // ✅ Voice commands CLEAR STOP and send new direction
+      stopPressed = false;
+      
       if (command.includes('forward left') || command.includes('go forward left')) {
         setVoiceDirection(voiceSpeed, voiceSpeed);
       } 
@@ -406,12 +414,7 @@
         setVoiceDirection(0, voiceSpeed);
       }
       else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
-        stopPressed = true;
-        throttle = 0;
-        steer = 0;
-        resetJoystick();
-        sendData();
-        setTimeout(() => stopPressed = false, 200);
+        stopPressed = true;  // ✅ Keep STOP active
       }
     }
 
@@ -429,7 +432,7 @@
         if (voiceActive) {
           throttle = 0;
           steer = 0;
-          resetJoystick();
+          resetJoystick();  // ✅ Triggers continuous STOP
         }
       }, 2000);
     }
