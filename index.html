@@ -393,26 +393,26 @@
       
       // CORRECTED: Forward Left (W) needs NEGATIVE Throttle and NEGATIVE Steer
       if (command.includes('forward left') || command.includes('go forward left')) {
-        setVoiceDirection(voiceSpeed, -voiceSpeed); // W direction: FWD (-) & LEFT (-)
+        setVoiceDirection(-voiceSpeed, -voiceSpeed); // W direction: FWD (-) & LEFT (-)
       } 
       // Forward Right (X)
       else if (command.includes('forward right') || command.includes('go forward right')) {
-        setVoiceDirection(voiceSpeed, voiceSpeed); // X direction: FWD (-) & RIGHT (+)
+        setVoiceDirection(-voiceSpeed, voiceSpeed); // X direction: FWD (-) & RIGHT (+)
       }
       // Backward Left (Y)
       else if (command.includes('backward left') || command.includes('go backward left') || command.includes('back left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed); // Y direction: BWD (+) & LEFT (-)
+        setVoiceDirection(voiceSpeed, -voiceSpeed); // Y direction: BWD (+) & LEFT (-)
       }
       // Backward Right (Z)
       else if (command.includes('backward right') || command.includes('go backward right') || command.includes('back right')) {
-        setVoiceDirection(-voiceSpeed, voiceSpeed); // Z direction: BWD (+) & RIGHT (+)
+        setVoiceDirection(voiceSpeed, voiceSpeed); // Z direction: BWD (+) & RIGHT (+)
       }
       // Straight directions 
       else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        setVoiceDirection(voiceSpeed, 0); // F direction: FWD (-)
+        setVoiceDirection(-voiceSpeed, 0); // F direction: FWD (-)
       }
       else if (command.includes('backward') || command.includes('go backward') || command.includes('back') || command.includes('reverse')) {
-        setVoiceDirection(-voiceSpeed, 0); // B direction: BWD (+)
+        setVoiceDirection(voiceSpeed, 0); // B direction: BWD (+)
       }
       else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
         setVoiceDirection(0, -voiceSpeed); // L direction: LEFT (-)
