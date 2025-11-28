@@ -264,6 +264,7 @@
         `Direction: ${direction} | Speed: ${speed}% | Voice: ${voiceActive ? 'ON' : 'OFF'}`;
     }
 
+    // CONTINUOUS STOP LOOP
     setInterval(() => {
       if (isConnected && stopPressed) {
         throttle = 0;
@@ -327,8 +328,8 @@
       resetJoystick();
     });
 
+    // VOICE CONTROL - PERFECT MATCHING
     const voiceBtn = document.getElementById('voiceBtn');
-
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
@@ -377,45 +378,51 @@
       voiceBtn.disabled = true;
     }
 
-    // ✅ FIXED VOICE COMMANDS - CORRECT DIRECTIONS
+    // ✅ PERFECT VOICE COMMAND MATCHING - NO OVERLAP
     function processVoiceCommand(command) {
       const voiceSpeed = 75;
       stopPressed = false;
       
-      if (command.includes('forward left') || command.includes('go forward left')) {
-        // ✅ W: Forward + Left → throttle=-75, steer=-75
-        setVoiceDirection(voiceSpeed, voiceSpeed);
-      } 
-      else if (command.includes('forward right') || command.includes('go forward right')) {
-        // ✅ X: Forward + Right → throttle=-75, steer=+75
-        setVoiceDirection(voiceSpeed, voiceSpeed);
+      // DIAGONAL COMMANDS FIRST (exact word matching)
+      const words = command.split(/\s+/);
+      
+      if (words.includes('forward') && words.includes('left')) {
+        setVoiceDirection(voiceSpeed, voiceSpeed); // W
+        return;
       }
-      else if (command.includes('backward left') || command.includes('back left')) {
-        // ✅ Y: Backward + Left → throttle=+75, steer=-75
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+      if (words.includes('forward') && words.includes('right')) {
+        setVoiceDirection(voiceSpeed, voiceSpeed);  // X
+        return;
       }
-      else if (command.includes('backward right') || command.includes('back right')) {
-        // ✅ Z: Backward + Right → throttle=+75, steer=+75
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+      if (words.includes('backward') && words.includes('left')) {
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);  // Y
+        return;
       }
-      else if (command.includes('forward') || command.includes('go forward') || command.includes('move forward')) {
-        // ✅ F: Forward → throttle=-75, steer=0
-        setVoiceDirection(voiceSpeed, 0);
+      if (words.includes('backward') && words.includes('right')) {
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);   // Z
+        return;
       }
-      else if (command.includes('backward') || command.includes('back') || command.includes('reverse')) {
-        // ✅ B: Backward → throttle=+75, steer=0
-        setVoiceDirection(-voiceSpeed, 0);
+      
+      // SINGLE DIRECTION COMMANDS
+      if (words.includes('forward') || words.includes('go') && words.includes('forward')) {
+        setVoiceDirection(voiceSpeed, 0);  // F
+        return;
       }
-      else if (command.includes('left') || command.includes('turn left') || command.includes('go left')) {
-        // ✅ L: Left → throttle=0, steer=-75
-        setVoiceDirection(0, -voiceSpeed);
+      if (words.includes('backward') || words.includes('back') || words.includes('reverse')) {
+        setVoiceDirection(-voiceSpeed, 0);   // B
+        return;
       }
-      else if (command.includes('right') || command.includes('turn right') || command.includes('go right')) {
-        // ✅ R: Right → throttle=0, steer=+75
-        setVoiceDirection(0, voiceSpeed);
+      if (words.includes('left') || words.includes('turn') && words.includes('left')) {
+        setVoiceDirection(0, -voiceSpeed);  // L
+        return;
       }
-      else if (command.includes('stop') || command.includes('halt') || command.includes('brake')) {
+      if (words.includes('right') || words.includes('turn') && words.includes('right')) {
+        setVoiceDirection(0, voiceSpeed);   // R
+        return;
+      }
+      if (words.includes('stop') || words.includes('halt') || words.includes('brake')) {
         stopPressed = true;
+        return;
       }
     }
 
