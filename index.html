@@ -151,18 +151,10 @@
 </head>
 <body>
   <h1>🏎️ F1 Car Controller</h1>
-  
-  <div class="wifi-info">
-    <strong>📶 WiFi Setup:</strong><br>
-    1. Connect to: <strong>ESP32_F1_Car</strong><br>
-    2. Password: <strong>12345678</strong><br>
-    3. Click Connect below
-  </div>
-
   <div id="status">Not Connected</div>
   <button class="connect-btn" id="connectBtn">📶 Connect to Car</button>
   
- 
+  
   
   <div class="joystick-container">
     <div class="direction-labels">
@@ -186,7 +178,7 @@
   <div id="values">Direction: — | Speed: 0%</div>
 
   <script>
-    const ESP32_IP = "192.168.4.1"; // ESP32 Access Point IP
+    const ESP32_IP = "192.168.1.150"; // ← CHANGE THIS to your ESP32's IP from Serial Monitor
 
     let isConnected = false;
     let throttle = 0, steer = 0, stopPressed = false;
