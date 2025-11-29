@@ -162,7 +162,7 @@
   <div id="status">Not Connected</div>
   <button class="connect-btn" id="connectBtn">📶 Connect to Car</button>
   
-  <div class="direction-display" id="directionDisplay">—</div>
+ 
   
   <div class="joystick-container">
     <div class="direction-labels">
@@ -418,22 +418,22 @@
       const voiceSpeed = 75;
       
       if (command.includes('forward left')) {
-        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+        setVoiceDirection(voiceSpeed, -voiceSpeed);
       } 
       else if (command.includes('forward right')) {
-        setVoiceDirection(-voiceSpeed, voiceSpeed);
-      }
-      else if (command.includes('backward left') || command.includes('back left')) {
-        setVoiceDirection(voiceSpeed, -voiceSpeed);
-      }
-      else if (command.includes('backward right') || command.includes('back right')) {
         setVoiceDirection(voiceSpeed, voiceSpeed);
       }
+      else if (command.includes('backward left') || command.includes('back left')) {
+        setVoiceDirection(-voiceSpeed, -voiceSpeed);
+      }
+      else if (command.includes('backward right') || command.includes('back right')) {
+        setVoiceDirection(-voiceSpeed, voiceSpeed);
+      }
       else if (command.includes('forward')) {
-        setVoiceDirection(-voiceSpeed, 0);
+        setVoiceDirection(voiceSpeed, 0);
       }
       else if (command.includes('backward') || command.includes('back')) {
-        setVoiceDirection(voiceSpeed, 0);
+        setVoiceDirection(-voiceSpeed, 0);
       }
       else if (command.includes('left')) {
         setVoiceDirection(0, -voiceSpeed);
